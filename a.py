@@ -8,12 +8,16 @@ def scan_wifi():
 
         # Extract SSID and signal strength information from the result
         networks = []
-        for line in result.split('\n'):
+        lines = result.split('\n')
+        ssid = None
+        for line in lines:
             if 'ESSID' in line:
                 ssid = line.split('"')[1]
             elif 'Signal level' in line:
-                signal_strength = line.split('=')[-1].split('/')[0]
-                networks.append({'SSID': ssid, 'Signal Strength': signal_strength})
+                if ssid:
+                    signal_strength = line.split('=')[-1].split('/')[0]
+                    networks.append({'SSID': ssid, 'Signal Strength': signal_strength})
+                    ssid = None
 
         if not networks:
             print("No wireless networks found.")
@@ -23,6 +27,8 @@ def scan_wifi():
                 print(f"SSID: {network['SSID']}, Signal Strength: {network['Signal Strength']}")
     except subprocess.CalledProcessError:
         print("Error: Failed to scan for wireless networks.")
+    except Exception as e:
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
     scan_wifi()

@@ -1,23 +1,19 @@
-import subprocess
+import os
 
 def scan_wifi():
     try:
-        # Execute the iwlist command to scan for available networks
-        result = subprocess.check_output(['iwlist', 'wlan0', 'scan'])
-        result = result.decode('utf-8')
+        # Execute the nmcli command to list available wireless networks
+        result = os.popen('nmcli device wifi list').read()
 
         # Extract SSID and signal strength information from the result
         networks = []
-        lines = result.split('\n')
-        ssid = None
+        lines = result.split('\n')[1:]  # Skip header line
         for line in lines:
-            if 'ESSID' in line:
-                ssid = line.split('"')[1]
-            elif 'Signal level' in line:
-                if ssid:
-                    signal_strength = line.split('=')[-1].split('/')[0]
-                    networks.append({'SSID': ssid, 'Signal Strength': signal_strength})
-                    ssid = None
+            if line.strip():
+                fields = line.split()
+                ssid = fields[0]
+                signal_strength = fields[7]
+                networks.append({'SSID': ssid, 'Signal Strength': signal_strength})
 
         if not networks:
             print("No wireless networks found.")
@@ -25,8 +21,6 @@ def scan_wifi():
             print("Available wireless networks:")
             for network in networks:
                 print(f"SSID: {network['SSID']}, Signal Strength: {network['Signal Strength']}")
-    except subprocess.CalledProcessError:
-        print("Error: Failed to scan for wireless networks.")
     except Exception as e:
         print(f"Error: {e}")
 

@@ -1,28 +1,32 @@
-import os
+import subprocess
+import re
 
-def scan_wifi():
+def monitor_wifi(interface):
     try:
-        # Execute the nmcli command to list available wireless networks
-        result = os.popen('nmcli device wifi list').read()
+        # Run tcpdump to capture WiFi traffic
+        process = subprocess.Popen(['tcpdump', '-i', interface, 'subtype', 'probe-req'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-        # Extract SSID and signal strength information from the result
-        networks = []
-        lines = result.split('\n')[1:]  # Skip header line
-        for line in lines:
-            if line.strip():
-                fields = line.split()
-                ssid = fields[0]
-                signal_strength = fields[7]
-                networks.append({'SSID': ssid, 'Signal Strength': signal_strength})
+        print("Monitoring WiFi for connection attempts...")
 
-        if not networks:
-            print("No wireless networks found.")
-        else:
-            print("Available wireless networks:")
-            for network in networks:
-                print(f"SSID: {network['SSID']}, Signal Strength: {network['Signal Strength']}")
-    except Exception as e:
-        print(f"Error: {e}")
+        # Parse captured packets
+        for line in iter(process.stdout.readline, ''):
+            # Extract SSID from probe request
+            match = re.search(r'SSID: "(.*)"', line)
+            if match:
+                ssid = match.group(1)
+
+                # Extract password from captured packets
+                match = re.search(r'password=(\w+)', line)
+                if match:
+                    password = match.group(1)
+                    print(f"SSID: {ssid}, Password: {password}")
+
+    except KeyboardInterrupt:
+        print("\nExiting...")
+
+def main():
+    wifi_interface = "wlan0"  # Replace with your WiFi interface name
+    monitor_wifi(wifi_interface)
 
 if __name__ == "__main__":
-    scan_wifi()
+    main()

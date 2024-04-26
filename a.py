@@ -1,5 +1,14 @@
 import subprocess
 import re
+import time
+
+def create_wifi_hotspot(ssid, password):
+    try:
+        # Configure the WiFi hotspot
+        subprocess.run(['nmcli', 'device', 'wifi', 'hotspot', 'ssid', ssid, 'password', password])
+        print(f"WiFi hotspot '{ssid}' created with password '{password}'")
+    except Exception as e:
+        print(f"Failed to create WiFi hotspot: {e}")
 
 def monitor_wifi(interface):
     try:
@@ -25,8 +34,23 @@ def monitor_wifi(interface):
         print("\nExiting...")
 
 def main():
+    ssid = "MyWiFiHotspot"
+    password = "MyPassword"
     wifi_interface = "wlan0"  # Replace with your WiFi interface name
-    monitor_wifi(wifi_interface)
+
+    try:
+        # Loop to continuously create and monitor WiFi hotspots
+        while True:
+            # Create WiFi hotspot
+            create_wifi_hotspot(ssid, password)
+            
+            # Monitor WiFi for connection attempts
+            monitor_wifi(wifi_interface)
+
+            # Wait for some time before creating the next hotspot
+            time.sleep(30)  # Adjust the time interval as needed
+    except KeyboardInterrupt:
+        print("\nExiting...")
 
 if __name__ == "__main__":
     main()
